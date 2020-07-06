@@ -43,9 +43,9 @@ app.get('/api/', async (req, res) => {
 
 app.post('/api/', upload.fields([{ name: 'files-to-upload', maxCount: 4 }]), async (req, res) => {
     try {
-        const downloadURLs = [];
+        // const downloadURLs = [];
         const errors = [];
-        for (const file of req.files['files-to-upload']) { // await removed
+        for await (const file of req.files['files-to-upload']) { // await removed
             try {
                 const fileSize = file.size / (1024 * 1024);
                 if (fileSize > 8) {
@@ -60,11 +60,11 @@ app.post('/api/', upload.fields([{ name: 'files-to-upload', maxCount: 4 }]), asy
                 errors.push({ name: file.originalname, error: err });
             }
         }
-        res.send('Upload started');
-        // res.send({
-        //     downloadURLs,
-        //     errors
-        // });
+        // res.send('Upload started');
+        res.send({
+            // downloadURLs,
+            errors
+        });
     } catch (err) {
         console.log(err);
         res.status(404).send(err.message);
@@ -175,6 +175,7 @@ async function deleteItem(path) {
 async function uploadItem(fileName, file) {
     const uploadTask = storageRef.child(fileName).put(file);
     if (!uploadTasks.has(fileName)) {
+        console.log('Task has been added to Map');
         uploadTasks.set(fileName, uploadTask);
     }
     return new Promise((resolve, reject) => {
@@ -194,9 +195,9 @@ async function uploadItem(fileName, file) {
             reject(error.code);
         }, async () => {
             uploadTasks.delete(fileName);
-            const url = await uploadTask.snapshot.ref.getDownloadURL();
-            console.log('File available at', url);
-            resolve(url);
+            // const url = await uploadTask.snapshot.ref.getDownloadURL();
+            // console.log('File available at', url);
+            resolve();
         });
     });
 }
