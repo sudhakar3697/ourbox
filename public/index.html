@@ -12,20 +12,27 @@
 </head>
 
 <body onload="showFileList()">
-    <h1>Ourbox</h1>
-    <form id="file-uploader" enctype="multipart/form-data">
-        <input type="file" multiple name="files-to-upload" />
-    </form>
-    <br />
-    <button onclick="upload()"> Upload</button>
-    <table id="file-table">
-        <tr>
-            <th>File Name</th>
-            <th>Size</th>
-            <th>Updated At</th>
-            <th>Controls</th>
-        </tr>
-    </table>
+    <header>
+        <h1>Ourbox</h1>
+    </header>
+    <main>
+        <section id="uploader">
+            <form id="file-uploader" enctype="multipart/form-data" style="float: left;">
+                <input type="file" multiple name="files-to-upload" />
+            </form>
+            <button onclick="upload()" style="margin-bottom: 1%;"> Upload</button>
+        </section>
+        <section>
+            <table id="file-table">
+                <tr>
+                    <th>File Name</th>
+                    <th>Size</th>
+                    <th>Updated At</th>
+                    <th>Controls</th>
+                </tr>
+            </table>
+        </section>
+    </main>
     <script src="main.js"></script>
 
 </body>
