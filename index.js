@@ -40,14 +40,20 @@ app.get('/api/', async (req, res) => {
     }
 });
 
-app.post('/api/', upload.fields([{ name: 'files-to-upload', maxCount: 10 }]), async (req, res) => {
+app.post('/api/', upload.fields([{ name: 'files-to-upload', maxCount: 4 }]), async (req, res) => {
     try {
         const downloadURLs = [];
         const errors = [];
         for await (const file of req.files['files-to-upload']) {
             try {
-                const url = await uploadItem(file.originalname, file.buffer);
-                downloadURLs.push({ name: file.originalname, downloadUrl: url });
+                const fileSize = file.size / (1024 * 1024);
+                if (fileSize > 8) {
+                    errors.push({ name: file.originalname, error: 'File should be less than 8 MB' });
+                }
+                else {
+                    const url = await uploadItem(file.originalname, file.buffer);
+                    downloadURLs.push({ name: file.originalname, downloadUrl: url });
+                }
             } catch (err) {
                 errors.push({ name: file.originalname, error: err });
             }

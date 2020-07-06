@@ -1,5 +1,5 @@
-// const API_URL = `https://ourbox.herokuapp.com/api`;
-const API_URL = `http://localhost:5000/api`;
+const API_URL = `https://ourbox.herokuapp.com/api`;
+// const API_URL = `http://localhost:5000/api`;
 
 async function showFileList() {
     try {
@@ -15,9 +15,9 @@ async function showFileList() {
             downloadAnchor.innerHTML = file.name;
             nameCol.appendChild(downloadAnchor);
             const sizeCol = document.createElement('td');
-            sizeCol.innerHTML = file.size;
+            sizeCol.innerHTML = (parseFloat(file.size) / (1024 * 1024)).toFixed(2);
             const updatedCol = document.createElement('td');
-            updatedCol.innerHTML = file.updated;
+            updatedCol.innerHTML = new Date(file.updated).toLocaleString();
             const delButtonCol = document.createElement('td');
             const deleteButton = document.createElement('button');
             deleteButton.innerHTML = 'Delete';
@@ -32,6 +32,20 @@ async function showFileList() {
     } catch (err) {
         console.log(err);
         alert('File listing failed');
+    }
+}
+
+function validateSize(data) {
+    if (data.files.length > 4) {
+        alert('You can only upload 4 files at a time');
+    }
+    else {
+        for (const file of data.files) {
+            const fileSize = file.size / (1024 * 1024);
+            if (fileSize > 8) {
+                alert(`${file.name} is ${fileSize.toFixed(2)} MB. File should be less than 8 MB`);
+            }
+        }
     }
 }
 
