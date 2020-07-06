@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const compression = require('compression');
 const multer = require('multer');
 const firebase = require('firebase/app');
 global.XMLHttpRequest = require('xhr2');
@@ -8,13 +9,14 @@ require('firebase/auth');
 require('firebase/storage');
 require('dotenv').config();
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 const app = new express();
 const upload = multer();
 const uploadTasks = new Map();
 
 app.use(cors());
 app.use(helmet());
+app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
@@ -33,44 +35,42 @@ firebase.initializeApp(firebaseConfig);
 const storage = firebase.storage();
 const storageRef = storage.ref();
 
+// Get List of files in the root
 app.get('/api/', async (req, res) => {
     try {
         res.send(await listFilesInRoot());
     } catch (err) {
-        res.status(404).send(err.message);
+        res.status(404).send(err);
     }
 });
 
+// Upload files to root
 app.post('/api/', upload.fields([{ name: 'files-to-upload', maxCount: 4 }]), async (req, res) => {
     try {
-        // const downloadURLs = [];
         const errors = [];
-        for await (const file of req.files['files-to-upload']) { // await removed
+        for (const file of req.files['files-to-upload']) {
             try {
                 const fileSize = file.size / (1024 * 1024);
                 if (fileSize > 8) {
                     errors.push({ name: file.originalname, error: 'File should be less than 8 MB' });
                 }
                 else {
-                    // const url = await uploadItem(file.originalname, file.buffer);
                     uploadItem(file.originalname, file.buffer);
-                    // downloadURLs.push({ name: file.originalname, downloadUrl: url });
                 }
             } catch (err) {
                 errors.push({ name: file.originalname, error: err });
             }
         }
-        // res.send('Upload started');
         res.send({
-            // downloadURLs,
             errors
         });
     } catch (err) {
         console.log(err);
-        res.status(404).send(err.message);
+        res.status(404).send(err);
     }
 });
 
+// Get download URL for the requested file
 app.post('/api/download', async (req, res) => {
     try {
         res.send(await downloadItem(req.body.path));
@@ -79,6 +79,7 @@ app.post('/api/download', async (req, res) => {
     }
 });
 
+// Delete the requested file
 app.delete('/api/', async (req, res) => {
     try {
         res.send(await deleteItem(req.body.path));
@@ -87,6 +88,7 @@ app.delete('/api/', async (req, res) => {
     }
 });
 
+// Perform pause, resume, cancel operations on upload tasks
 app.post('/api/uploads', async (req, res) => {
     try {
         switch (req.body.operation) {
@@ -118,22 +120,24 @@ app.post('/api/uploads', async (req, res) => {
     }
 });
 
+// Get list of upload tasks
 app.get('/api/uploads', async (req, res) => {
     try {
         const data = [];
         for (const task of uploadTasks) {
+            const { bytesTransferred, totalBytes, state } = task[1].snapshot;
             data.push({
                 file: task[0],
-                bytesTransferred: `${(task[1].snapshot.bytesTransferred / (1024 * 1024)).toFixed(2)} MB`,
-                totalBytes: `${(task[1].snapshot.totalBytes / (1024 * 1024)).toFixed(2)} MB`,
-                progress: ((task[1].snapshot.bytesTransferred / task[1].snapshot.totalBytes) * 100).toFixed(2),
-                state: task[1].snapshot.state
+                bytesTransferred: `${(bytesTransferred / (1024 * 1024)).toFixed(2)} MB`,
+                totalBytes: `${(totalBytes / (1024 * 1024)).toFixed(2)} MB`,
+                progress: ((bytesTransferred / totalBytes) * 100).toFixed(2),
+                state
             });
         }
         res.send(data);
     } catch (err) {
         console.log(err);
-        res.status(404).send(err.message);
+        res.status(404).send(err);
     }
 });
 
@@ -175,29 +179,26 @@ async function deleteItem(path) {
 async function uploadItem(fileName, file) {
     const uploadTask = storageRef.child(fileName).put(file);
     if (!uploadTasks.has(fileName)) {
-        console.log('Task has been added to Map');
+        console.log('Task has been added to uploadTasks Map');
         uploadTasks.set(fileName, uploadTask);
     }
-    return new Promise((resolve, reject) => {
-        uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            console.log('Upload is ' + progress + '% done');
-            switch (snapshot.state) {
-                case firebase.storage.TaskState.PAUSED:
-                    console.log('Upload is paused');
-                    break;
-                case firebase.storage.TaskState.RUNNING:
-                    console.log('Upload is running');
-                    break;
-            }
-        }, (error) => {
-            console.log(error.code);
-            reject(error.code);
-        }, async () => {
-            uploadTasks.delete(fileName);
-            // const url = await uploadTask.snapshot.ref.getDownloadURL();
-            // console.log('File available at', url);
-            resolve();
-        });
+    else {
+        console.log('Already present in uploadTasks Map');
+    }
+    uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        console.log('Upload is ' + progress + '% done');
+        switch (snapshot.state) {
+            case firebase.storage.TaskState.PAUSED:
+                console.log('Upload is paused');
+                break;
+            case firebase.storage.TaskState.RUNNING:
+                console.log('Upload is running');
+                break;
+        }
+    }, (error) => {
+        console.log(error.code);
+    }, () => {
+        uploadTasks.delete(fileName);
     });
 }

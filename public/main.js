@@ -1,33 +1,43 @@
 const API_URL = `https://ourbox.herokuapp.com/api`;
 // const API_URL = `http://localhost:5000/api`;
 
+async function init() {
+    showFileList();
+    showUploadsList();
+}
+
 async function showFileList() {
     try {
-        showUploadsList();
         let result = await fetch(API_URL);
         result = await result.json();
         for (const file of result) {
             const fileTable = document.getElementById('file-table');
             const row = document.createElement('tr');
+
             const nameCol = document.createElement('td');
             const downloadAnchor = document.createElement('a');
             downloadAnchor.download = file.name;
-            downloadAnchor.href = await getDownloadUrl(file.fullPath);
+            getDownloadUrl(file.fullPath, downloadAnchor);
             downloadAnchor.innerHTML = file.name;
             nameCol.appendChild(downloadAnchor);
+
             const sizeCol = document.createElement('td');
             sizeCol.innerHTML = file.size;
+
             const updatedCol = document.createElement('td');
             updatedCol.innerHTML = new Date(file.updated).toLocaleString();
+
             const delButtonCol = document.createElement('td');
             const deleteButton = document.createElement('button');
             deleteButton.innerHTML = 'Delete';
             deleteButton.onclick = () => { deleteItem(file.fullPath) };
             delButtonCol.appendChild(deleteButton);
+
             row.appendChild(nameCol);
             row.appendChild(sizeCol);
             row.appendChild(updatedCol);
             row.appendChild(delButtonCol);
+
             fileTable.appendChild(row);
         }
     } catch (err) {
@@ -42,31 +52,38 @@ async function showUploadsList() {
         let result = await fetch(`${API_URL}/uploads`);
         result = await result.json();
         for (const uploadTask of result) {
+            const { file, progress, bytesTransferred, totalBytes, state } = uploadTask;
             const uploadsTable = document.getElementById('upload-progress-table');
             const row = document.createElement('tr');
+
             const nameCol = document.createElement('td');
-            nameCol.innerHTML = uploadTask.file;
+            nameCol.innerHTML = file;
+
             const progressCol = document.createElement('td');
-            progressCol.innerHTML = `${uploadTask.progress} % (${uploadTask.bytesTransferred} / ${uploadTask.totalBytes} - ${uploadTask.state})`;
+            progressCol.innerHTML = `${progress} % (${bytesTransferred} / ${totalBytes} - ${state})`;
+
             const pauseOrResumeCol = document.createElement('td');
             const pauseOrResumeButton = document.createElement('button');
-            pauseOrResumeButton.innerHTML = (uploadTask.state === 'running') ? 'Pause' : 'Resume';
-            pauseOrResumeButton.onclick = () => { pauseOrResumeUpload(uploadTask.file) };
+            pauseOrResumeButton.innerHTML = (state === 'running') ? 'Pause' : 'Resume';
+            pauseOrResumeButton.onclick = () => { pauseOrResumeUpload(file) };
             pauseOrResumeCol.appendChild(pauseOrResumeButton);
+
             const cancelCol = document.createElement('td');
             const cancelButton = document.createElement('button');
             cancelButton.innerHTML = 'Cancel';
-            cancelButton.onclick = () => { cancelUpload(uploadTask.file) };
+            cancelButton.onclick = () => { cancelUpload(file) };
             cancelCol.appendChild(cancelButton);
+
             row.appendChild(nameCol);
             row.appendChild(progressCol);
             row.appendChild(pauseOrResumeCol);
             row.appendChild(cancelCol);
+
             uploadsTable.appendChild(row);
         }
     } catch (err) {
         console.log(err);
-        alert('File listing failed');
+        alert('Ongoing Uploads listing failed');
     }
 }
 
@@ -105,9 +122,9 @@ async function deleteItem(path) {
     }
 }
 
-async function getDownloadUrl(path) {
+async function getDownloadUrl(path, downloadAnchor) {
     try {
-        let result = await fetch(`${API_URL}/download`, {
+        const result = await fetch(`${API_URL}/download`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -116,24 +133,22 @@ async function getDownloadUrl(path) {
                 path
             })
         });
-        result = await result.text();
-        return result;
+        downloadAnchor.href = await result.text();
     } catch (err) {
         console.log(err);
-        return '';
     }
 }
 
-async function upload(event) {
+async function upload() {
     try {
         const uploader = document.getElementById('file-uploader');
         let result = await fetch(API_URL, {
             method: 'POST',
             body: new FormData(uploader)
         });
-        // result = await result.json();
-        // console.log(result);
-        // alert('Refresh to view the updates');
+        result = await result.json();
+        console.log(result);
+        alert('Refresh to view the updates');
     } catch (err) {
         console.log(err);
     }
@@ -152,7 +167,6 @@ async function cancelUpload(file) {
             })
         });
         result = await result.text();
-        console.log(result);
         alert(result);
     } catch (err) {
         console.log(err);
@@ -172,7 +186,6 @@ async function pauseOrResumeUpload(file) {
             })
         });
         result = await result.text();
-        console.log(result);
         alert(result);
     } catch (err) {
         console.log(err);
