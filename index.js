@@ -11,6 +11,7 @@ require('dotenv').config();
 const PORT = process.env.PORT || 5000;
 const app = new express();
 const upload = multer();
+const uploadTasks = new Map();
 
 app.use(cors());
 app.use(helmet());
@@ -44,24 +45,26 @@ app.post('/api/', upload.fields([{ name: 'files-to-upload', maxCount: 4 }]), asy
     try {
         const downloadURLs = [];
         const errors = [];
-        for await (const file of req.files['files-to-upload']) {
+        for (const file of req.files['files-to-upload']) { // await removed
             try {
                 const fileSize = file.size / (1024 * 1024);
                 if (fileSize > 8) {
                     errors.push({ name: file.originalname, error: 'File should be less than 8 MB' });
                 }
                 else {
-                    const url = await uploadItem(file.originalname, file.buffer);
-                    downloadURLs.push({ name: file.originalname, downloadUrl: url });
+                    // const url = await uploadItem(file.originalname, file.buffer);
+                    uploadItem(file.originalname, file.buffer);
+                    // downloadURLs.push({ name: file.originalname, downloadUrl: url });
                 }
             } catch (err) {
                 errors.push({ name: file.originalname, error: err });
             }
         }
-        res.send({
-            downloadURLs,
-            errors
-        });
+        res.send('Upload started');
+        // res.send({
+        //     downloadURLs,
+        //     errors
+        // });
     } catch (err) {
         console.log(err);
         res.status(404).send(err.message);
@@ -84,6 +87,56 @@ app.delete('/api/', async (req, res) => {
     }
 });
 
+app.post('/api/uploads', async (req, res) => {
+    try {
+        switch (req.body.operation) {
+            case 'cancel':
+                uploadTasks.get(req.body.file).cancel();
+                uploadTasks.delete(req.body.file);
+                res.send('Cancelled');
+                break;
+            case 'pause-or-resume':
+                const snapshot = uploadTasks.get(req.body.file).snapshot;
+                if (snapshot.state === firebase.storage.TaskState.PAUSED) {
+                    uploadTasks.get(req.body.file).resume();
+                    res.send('Resumed');
+                }
+                else if (snapshot.state === firebase.storage.TaskState.RUNNING) {
+                    uploadTasks.get(req.body.file).pause();
+                    res.send('Paused');
+                }
+                else {
+                    res.send('Invalid upload task state found');
+                }
+                break;
+            default:
+                res.send('Invalid operation');
+                break;
+        }
+    } catch (err) {
+        res.status(404).send(err.message);
+    }
+});
+
+app.get('/api/uploads', async (req, res) => {
+    try {
+        const data = [];
+        for (const task of uploadTasks) {
+            data.push({
+                file: task[0],
+                bytesTransferred: `${(task[1].snapshot.bytesTransferred / (1024 * 1024)).toFixed(2)} MB`,
+                totalBytes: `${(task[1].snapshot.totalBytes / (1024 * 1024)).toFixed(2)} MB`,
+                progress: ((task[1].snapshot.bytesTransferred / task[1].snapshot.totalBytes) * 100).toFixed(2),
+                state: task[1].snapshot.state
+            });
+        }
+        res.send(data);
+    } catch (err) {
+        console.log(err);
+        res.status(404).send(err.message);
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Ourbox is running at ${PORT}`);
 })
@@ -95,7 +148,7 @@ async function listFilesInRoot() {
         // get folders result.prefixes
         for await (const entry of result.items) {
             const { name, fullPath, size, contentType, updated } = await entry.getMetadata();
-            data.push({ name, fullPath, size, contentType, updated });
+            data.push({ name, fullPath, size: (size / (1024 * 1024)).toFixed(2), contentType, updated });
         }
         return data;
     } catch (err) {
@@ -121,6 +174,9 @@ async function deleteItem(path) {
 
 async function uploadItem(fileName, file) {
     const uploadTask = storageRef.child(fileName).put(file);
+    if (!uploadTasks.has(fileName)) {
+        uploadTasks.set(fileName, uploadTask);
+    }
     return new Promise((resolve, reject) => {
         uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
@@ -137,19 +193,10 @@ async function uploadItem(fileName, file) {
             console.log(error.code);
             reject(error.code);
         }, async () => {
+            uploadTasks.delete(fileName);
             const url = await uploadTask.snapshot.ref.getDownloadURL();
             console.log('File available at', url);
             resolve(url);
         });
     });
 }
-
-// Pause the upload
-// uploadTask.pause();
-
-// Resume the upload
-// uploadTask.resume();
-
-// Cancel the upload
-// uploadTask.cancel();
-
