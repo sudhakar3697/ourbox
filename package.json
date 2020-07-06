@@ -7,8 +7,7 @@
   },
   "main": "index.js",
   "scripts": {
-    "start": "pm2 start index.js -i max",
-    "dev": "node index.js"
+    "start": "node index.js"
   },
   "author": "sudhakar3697 <rsudhakar3697@gmail.com>",
   "license": "MIT",
@@ -20,7 +19,6 @@
     "firebase": "^7.15.5",
     "helmet": "^3.23.3",
     "multer": "^1.4.2",
-    "pm2": "^4.4.0",
     "xhr2": "^0.2.0"
   }
 }
