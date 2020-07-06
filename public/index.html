@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Ourbox</title>
+    <link rel="icon" href="sudax.png">
+    <meta charset="UTF-8">
+    <meta name="description" content="Ourbox">
+    <meta name="keywords" content="ourbox, sudhakar, sudhakar3697, rsudhakar3697, sudhakar rs, sudhakar ramasamy">
+    <meta name="author" content="Sudhakar Ramasamy">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body onload="showFileList()">
+    <h1>Ourbox</h1>
+    <form id="file-uploader" enctype="multipart/form-data">
+        <input type="file" multiple name="files-to-upload" />
+    </form>
+    <br />
+    <button onclick="upload()"> Upload</button>
+    <table id="file-table">
+        <tr>
+            <th>File Name</th>
+            <th>Size</th>
+            <th>Updated At</th>
+            <th>Controls</th>
+        </tr>
+    </table>
+    <script>
+        const API_URL = `https://ourbox.herokuapp.com/api`;
+        // const API_URL = `http://localhost:5000/api`;
+
+        async function showFileList() {
+            try {
+                let result = await fetch(API_URL);
+                result = await result.json();
+                for await (const file of result) {
+                    const fileTable = document.getElementById('file-table');
+                    const row = document.createElement('tr');
+                    const nameCol = document.createElement('td');
+                    const downloadAnchor = document.createElement('a');
+                    downloadAnchor.download = file.name;
+                    downloadAnchor.href = await getDownloadUrl(file.fullPath);
+                    downloadAnchor.innerHTML = file.name;
+                    nameCol.appendChild(downloadAnchor);
+                    const sizeCol = document.createElement('td');
+                    sizeCol.innerHTML = file.size;
+                    const updatedCol = document.createElement('td');
+                    updatedCol.innerHTML = file.updated;
+                    const delButtonCol = document.createElement('td');
+                    const deleteButton = document.createElement('button');
+                    deleteButton.innerHTML = 'Delete';
+                    deleteButton.onclick = () => { deleteItem(file.fullPath) };
+                    delButtonCol.appendChild(deleteButton);
+                    row.appendChild(nameCol);
+                    row.appendChild(sizeCol);
+                    row.appendChild(updatedCol);
+                    row.appendChild(delButtonCol);
+                    fileTable.appendChild(row);
+                }
+            } catch (err) {
+                console.log(err);
+                alert('File listing failed');
+            }
+        }
+
+        async function deleteItem(path) {
+            try {
+                const result = await fetch(API_URL, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        path
+                    })
+                });
+                if (result.status === 200)
+                    alert('Deleted Successfully. Refresh to update the UI.');
+                else
+                    alert('Delete failed');
+            } catch (err) {
+                console.log(err);
+                alert('Delete failed');
+            }
+        }
+
+        async function getDownloadUrl(path) {
+            try {
+                let result = await fetch(`${API_URL}/download`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        path
+                    })
+                });
+                result = await result.text();
+                return result;
+            } catch (err) {
+                console.log(err);
+                return '';
+            }
+        }
+
+        async function upload(event) {
+            try {
+                const uploader = document.getElementById('file-uploader');
+                let result = await fetch(API_URL, {
+                    method: 'POST',
+                    body: new FormData(uploader)
+                });
+                result = await result.json();
+                console.log(result);
+                alert('Refresh to view the updates');
+            } catch (err) {
+                console.log(err);
+            }
+        }
+    </script>
+
+</body>
+
+</html>

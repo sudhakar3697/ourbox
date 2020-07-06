@@ -1,0 +1,23 @@
+{
+  "name": "ourbox",
+  "version": "1.0.0",
+  "description": "File storage app using firebase file storage",
+  "engines": {
+    "node": "14.x"
+  },
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "sudhakar3697 <rsudhakar3697@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "firebase": "^7.15.5",
+    "helmet": "^3.23.3",
+    "multer": "^1.4.2",
+    "xhr2": "^0.2.0"
+  }
+}
