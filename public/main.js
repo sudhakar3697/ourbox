@@ -131,8 +131,8 @@ async function upload(event) {
             method: 'POST',
             body: new FormData(uploader)
         });
-        result = await result.json();
-        console.log(result);
+        // result = await result.json();
+        // console.log(result);
         // alert('Refresh to view the updates');
     } catch (err) {
         console.log(err);
