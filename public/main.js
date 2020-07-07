@@ -129,8 +129,8 @@ function validateSize(data) {
     else {
         for (const file of data.files) {
             const fileSize = file.size / (1024 * 1024);
-            if (fileSize > 8) {
-                alert(`${file.name} is ${fileSize.toFixed(2)} MB.File should be less than 8 MB`);
+            if (fileSize > 50) {
+                alert(`${file.name} is ${fileSize.toFixed(2)} MB.File should be less than 50 MB`);
             }
         }
     }

@@ -51,8 +51,8 @@ app.post('/api/', upload.fields([{ name: 'files-to-upload', maxCount: 4 }]), asy
         for (const file of req.files['files-to-upload']) {
             try {
                 const fileSize = file.size / (1024 * 1024);
-                if (fileSize > 8) {
-                    errors.push({ name: file.originalname, error: 'File should be less than 8 MB' });
+                if (fileSize > 50) {
+                    errors.push({ name: file.originalname, error: 'File should be less than 50 MB' });
                 }
                 else {
                     uploadItem(file.originalname, file.buffer);
@@ -94,7 +94,7 @@ app.post('/api/uploads', async (req, res) => {
         switch (req.body.operation) {
             case 'cancel':
                 uploadTasks.get(req.body.file).cancel();
-                // uploadTasks.delete(req.body.file);
+                uploadTasks.delete(req.body.file);
                 res.send('Cancelled');
                 break;
             case 'pause-or-resume':
@@ -205,7 +205,7 @@ async function uploadItem(fileName, file) {
         printUploadTasksMap('uploadItem4');
     }, () => {
         printUploadTasksMap('uploadItem5');
-        // uploadTasks.delete(fileName);
+        uploadTasks.delete(fileName);
     });
 }
 
