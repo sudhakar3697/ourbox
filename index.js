@@ -124,6 +124,7 @@ app.post('/api/uploads', async (req, res) => {
 app.get('/api/uploads', async (req, res) => {
     try {
         const data = [];
+        printUploadTasksMap('/api/uploads');
         for (const task of uploadTasks) {
             const { bytesTransferred, totalBytes, state } = task[1].snapshot;
             data.push({
@@ -178,12 +179,15 @@ async function deleteItem(path) {
 
 async function uploadItem(fileName, file) {
     const uploadTask = storageRef.child(fileName).put(file);
+    printUploadTasksMap('uploadItem1');
     if (!uploadTasks.has(fileName)) {
         console.log('Task has been added to uploadTasks Map');
         uploadTasks.set(fileName, uploadTask);
+        printUploadTasksMap('uploadItem2');
     }
     else {
         console.log('Already present in uploadTasks Map');
+        printUploadTasksMap('uploadItem3');
     }
     uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
@@ -198,7 +202,17 @@ async function uploadItem(fileName, file) {
         }
     }, (error) => {
         console.log(error.code);
+        printUploadTasksMap('uploadItem4');
     }, () => {
+        printUploadTasksMap('uploadItem5');
         uploadTasks.delete(fileName);
     });
+}
+
+function printUploadTasksMap(name = '') {
+    console.log(`start - printUploadTasksMap - ${name}`);
+    for (const task of uploadTasks) {
+        console.log(task[0], task[1]);
+    }
+    console.log(`end - printUploadTasksMap - ${name}`);
 }
