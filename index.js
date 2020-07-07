@@ -212,7 +212,7 @@ async function uploadItem(fileName, file) {
 function printUploadTasksMap(name = '') {
     console.log(`start - printUploadTasksMap - ${name}`);
     for (const task of uploadTasks) {
-        console.log(task[0], task[1]);
+        console.log(task[0], 'is present in Map!!');
     }
     console.log(`end - printUploadTasksMap - ${name}`);
 }
