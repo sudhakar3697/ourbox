@@ -35,14 +35,6 @@ firebase.initializeApp(firebaseConfig);
 const storage = firebase.storage();
 const storageRef = storage.ref();
 
-app.get('/firebase-config/', (req, res) => {
-    try {
-        res.send(firebaseConfig);
-    } catch (err) {
-        res.status(404).send(err);
-    }
-});
-
 // Get List of files in the root
 app.get('/api/', async (req, res) => {
     try {
