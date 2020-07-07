@@ -94,7 +94,7 @@ app.post('/api/uploads', async (req, res) => {
         switch (req.body.operation) {
             case 'cancel':
                 uploadTasks.get(req.body.file).cancel();
-                uploadTasks.delete(req.body.file);
+                // uploadTasks.delete(req.body.file);
                 res.send('Cancelled');
                 break;
             case 'pause-or-resume':
@@ -205,7 +205,7 @@ async function uploadItem(fileName, file) {
         printUploadTasksMap('uploadItem4');
     }, () => {
         printUploadTasksMap('uploadItem5');
-        uploadTasks.delete(fileName);
+        // uploadTasks.delete(fileName);
     });
 }
 

@@ -27,7 +27,7 @@ async function showFileList(init = false) {
         result = await result.json();
 
         for (const file of result) {
-            
+
             const row = document.createElement('tr');
 
             const nameCol = document.createElement('td');
@@ -78,7 +78,11 @@ async function showUploadsList(init = false) {
             <th>Cancel</th></tr>`);
         }
 
-        let result = await fetch(`${API_URL}/uploads`);
+        let result = await fetch(`${API_URL}/uploads`, {
+            headers: {
+                'Cache-Control': 'no-cache'
+            }
+        });
         result = await result.json();
 
         for (const uploadTask of result) {
