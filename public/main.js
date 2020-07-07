@@ -2,16 +2,32 @@ const API_URL = `https://ourbox.herokuapp.com/api`;
 // const API_URL = `http://localhost:5000/api`;
 
 async function init() {
-    showFileList();
-    showUploadsList();
+    showFileList(true);
+    showUploadsList(true);
 }
 
-async function showFileList() {
+async function showFileList(init = false) {
     try {
+        const fileTable = document.getElementById('file-table');
+
+        if (!init) {
+            while (fileTable.firstChild) {
+                fileTable.removeChild(fileTable.lastChild);
+            }
+            fileTable.insertAdjacentHTML('beforeend', `                
+            <tr>
+            <th>File</th>
+            <th>Size (MB)</th>
+            <th>Updated At</th>
+            <th>Controls</th>
+        </tr>`);
+        }
+
         let result = await fetch(API_URL);
         result = await result.json();
+
         for (const file of result) {
-            const fileTable = document.getElementById('file-table');
+            
             const row = document.createElement('tr');
 
             const nameCol = document.createElement('td');
@@ -47,13 +63,28 @@ async function showFileList() {
 }
 
 
-async function showUploadsList() {
+async function showUploadsList(init = false) {
     try {
+        const uploadsTable = document.getElementById('upload-progress-table');
+
+        if (!init) {
+            while (uploadsTable.firstChild) {
+                uploadsTable.removeChild(uploadsTable.lastChild);
+            }
+            uploadsTable.insertAdjacentHTML('beforeend', `<tr>
+            <th>File</th>
+            <th>Progress</th>
+            <th>Pause/Resume</th>
+            <th>Cancel</th></tr>`);
+        }
+
         let result = await fetch(`${API_URL}/uploads`);
         result = await result.json();
+
         for (const uploadTask of result) {
+
             const { file, progress, bytesTransferred, totalBytes, state } = uploadTask;
-            const uploadsTable = document.getElementById('upload-progress-table');
+
             const row = document.createElement('tr');
 
             const nameCol = document.createElement('td');
@@ -148,7 +179,7 @@ async function upload() {
         });
         result = await result.json();
         console.log(result);
-        alert('Refresh to view the updates');
+        // alert('Refresh to view the updates');
     } catch (err) {
         console.log(err);
     }
