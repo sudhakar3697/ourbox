@@ -1,3 +1,4 @@
+const EventEmitter = require('events');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -13,6 +14,7 @@ const PORT = process.env.PORT;
 const app = new express();
 const upload = multer();
 const uploadTasks = new Map();
+const uploadEventsStream = new EventEmitter();
 
 app.use(cors());
 app.use(helmet());
@@ -142,6 +144,8 @@ app.get('/api/uploads', async (req, res) => {
     }
 });
 
+app.get('/api/uploads/events', (req, res) => sendUploadEvents(req, res));
+
 app.listen(PORT, () => {
     console.log(`Ourbox is running at ${PORT}`);
 })
@@ -179,6 +183,12 @@ async function deleteItem(path) {
 
 async function uploadItem(fileName, file) {
     const uploadTask = storageRef.child(fileName).put(file);
+    uploadEventsStream.emit('start', {
+        totalBytes: uploadTask.snapshot.totalBytes,
+        bytesTransferred: uploadTask.snapshot.bytesTransferred,
+        file: fileName,
+        state: uploadTask.snapshot.state
+    });
     printUploadTasksMap('uploadItem1');
     if (!uploadTasks.has(fileName)) {
         console.log('Task has been added to uploadTasks Map');
@@ -190,6 +200,12 @@ async function uploadItem(fileName, file) {
         printUploadTasksMap('uploadItem3');
     }
     uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
+        uploadEventsStream.emit('progress', {
+            totalBytes: uploadTask.snapshot.totalBytes,
+            bytesTransferred: uploadTask.snapshot.bytesTransferred,
+            file: fileName,
+            state: uploadTask.snapshot.state
+        });
         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
         console.log('Upload is ' + progress + '% done');
         switch (snapshot.state) {
@@ -202,10 +218,46 @@ async function uploadItem(fileName, file) {
         }
     }, (error) => {
         console.log(error.code);
+        uploadEventsStream.emit('error', {
+            totalBytes: uploadTask.snapshot.totalBytes,
+            bytesTransferred: uploadTask.snapshot.bytesTransferred,
+            file: fileName,
+            state: uploadTask.snapshot.state
+        });
         printUploadTasksMap('uploadItem4');
     }, () => {
+        uploadEventsStream.emit('complete', {
+            totalBytes: uploadTask.snapshot.totalBytes,
+            bytesTransferred: uploadTask.snapshot.bytesTransferred,
+            file: fileName,
+            state: uploadTask.snapshot.state
+        });
         printUploadTasksMap('uploadItem5');
         uploadTasks.delete(fileName);
+    });
+}
+
+function sendUploadEvents(req, res) {
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive'
+    });
+
+    uploadEventsStream.on('start', function (data) {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+    });
+
+    uploadEventsStream.on('progress', function (data) {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+    });
+
+    uploadEventsStream.on('error', function (data) {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+    });
+
+    uploadEventsStream.on('complete', function (data) {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
     });
 }
 
