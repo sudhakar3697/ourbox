@@ -37,6 +37,10 @@ firebase.initializeApp(firebaseConfig);
 const storage = firebase.storage();
 const storageRef = storage.ref();
 
+app.get('/api/status', (req, res) => {
+    res.send('up');
+});
+
 // Get List of files in the root
 app.get('/api/', async (req, res) => {
     try {
