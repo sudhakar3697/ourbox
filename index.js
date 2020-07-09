@@ -184,8 +184,9 @@ async function deleteItem(path) {
 async function uploadItem(fileName, file) {
     const uploadTask = storageRef.child(fileName).put(file);
     uploadEventsStream.emit('start', {
-        totalBytes: uploadTask.snapshot.totalBytes,
-        bytesTransferred: uploadTask.snapshot.bytesTransferred,
+        bytesTransferred: `${(uploadTask.snapshot.bytesTransferred / (1024 * 1024)).toFixed(2)} MB`,
+        totalBytes: `${(uploadTask.snapshot.totalBytes / (1024 * 1024)).toFixed(2)} MB`,
+        progress: ((uploadTask.snapshot.bytesTransferred / uploadTask.snapshot.totalBytes) * 100).toFixed(2),
         file: fileName,
         state: uploadTask.snapshot.state
     });
@@ -201,8 +202,9 @@ async function uploadItem(fileName, file) {
     }
     uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
         uploadEventsStream.emit('progress', {
-            totalBytes: uploadTask.snapshot.totalBytes,
-            bytesTransferred: uploadTask.snapshot.bytesTransferred,
+            bytesTransferred: `${(uploadTask.snapshot.bytesTransferred / (1024 * 1024)).toFixed(2)} MB`,
+            totalBytes: `${(uploadTask.snapshot.totalBytes / (1024 * 1024)).toFixed(2)} MB`,
+            progress: ((uploadTask.snapshot.bytesTransferred / uploadTask.snapshot.totalBytes) * 100).toFixed(2),
             file: fileName,
             state: uploadTask.snapshot.state
         });
@@ -219,16 +221,18 @@ async function uploadItem(fileName, file) {
     }, (error) => {
         console.log(error.code);
         uploadEventsStream.emit('error', {
-            totalBytes: uploadTask.snapshot.totalBytes,
-            bytesTransferred: uploadTask.snapshot.bytesTransferred,
+            bytesTransferred: `${(uploadTask.snapshot.bytesTransferred / (1024 * 1024)).toFixed(2)} MB`,
+            totalBytes: `${(uploadTask.snapshot.totalBytes / (1024 * 1024)).toFixed(2)} MB`,
+            progress: ((uploadTask.snapshot.bytesTransferred / uploadTask.snapshot.totalBytes) * 100).toFixed(2),
             file: fileName,
             state: uploadTask.snapshot.state
         });
         printUploadTasksMap('uploadItem4');
     }, () => {
         uploadEventsStream.emit('complete', {
-            totalBytes: uploadTask.snapshot.totalBytes,
-            bytesTransferred: uploadTask.snapshot.bytesTransferred,
+            bytesTransferred: `${(uploadTask.snapshot.bytesTransferred / (1024 * 1024)).toFixed(2)} MB`,
+            totalBytes: `${(uploadTask.snapshot.totalBytes / (1024 * 1024)).toFixed(2)} MB`,
+            progress: ((uploadTask.snapshot.bytesTransferred / uploadTask.snapshot.totalBytes) * 100).toFixed(2),
             file: fileName,
             state: uploadTask.snapshot.state
         });
@@ -246,18 +250,22 @@ function sendUploadEvents(req, res) {
 
     uploadEventsStream.on('start', function (data) {
         res.write(`data: ${JSON.stringify(data)}\n\n`);
+        res.flush();
     });
 
     uploadEventsStream.on('progress', function (data) {
         res.write(`data: ${JSON.stringify(data)}\n\n`);
+        res.flush();
     });
 
     uploadEventsStream.on('error', function (data) {
         res.write(`data: ${JSON.stringify(data)}\n\n`);
+        res.flush();
     });
 
     uploadEventsStream.on('complete', function (data) {
         res.write(`data: ${JSON.stringify(data)}\n\n`);
+        res.flush();
     });
 }
 
