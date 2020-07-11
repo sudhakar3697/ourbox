@@ -256,14 +256,14 @@ function sendUploadEvents(req, res) {
             status: 'OK'
         })}\n\n`);
         res.flush();
-    }, 29999);
+    }, 25000);
 
     setInterval(() => {
         res.write(`data: ${JSON.stringify({
             status: 'OK'
         })}\n\n`);
         res.flush();
-    }, 54999);
+    }, 50000);
 
     uploadEventsStream.on('start', function (data) {
         res.write(`data: ${JSON.stringify(data)}\n\n`);
