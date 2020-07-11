@@ -243,6 +243,12 @@ async function uploadItem(fileName, file) {
 
 function sendUploadEvents(req, res) {
 
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive'
+    });
+
     res.write(`data: ${JSON.stringify({
         status: 'OK'
     })}\n\n`);
@@ -254,12 +260,6 @@ function sendUploadEvents(req, res) {
         })}\n\n`);
         res.flush();
     }, 20000);
-
-    res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive'
-    });
 
     uploadEventsStream.on('start', function (data) {
         res.write(`data: ${JSON.stringify(data)}\n\n`);
