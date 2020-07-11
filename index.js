@@ -37,10 +37,6 @@ firebase.initializeApp(firebaseConfig);
 const storage = firebase.storage();
 const storageRef = storage.ref();
 
-app.get('/api/status', (req, res) => {
-    res.send('up');
-});
-
 // Get List of files in the root
 app.get('/api/', async (req, res) => {
     try {
@@ -246,6 +242,8 @@ async function uploadItem(fileName, file) {
 }
 
 function sendUploadEvents(req, res) {
+    req.socket.setTimeout(0x7FFFFFFF);
+
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
