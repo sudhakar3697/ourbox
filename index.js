@@ -243,6 +243,11 @@ async function uploadItem(fileName, file) {
 
 function sendUploadEvents(req, res) {
 
+    res.write(`data: ${JSON.stringify({
+        status: 'OK'
+    })}\n\n`);
+    res.flush();
+
     setInterval(() => {
         res.write(`data: ${JSON.stringify({
             status: 'OK'
