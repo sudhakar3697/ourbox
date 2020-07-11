@@ -242,7 +242,13 @@ async function uploadItem(fileName, file) {
 }
 
 function sendUploadEvents(req, res) {
-    req.socket.setTimeout(0x7FFFFFFF);
+
+    setInterval(() => {
+        res.write(`data: ${JSON.stringify({
+            status: 'OK'
+        })}\n\n`);
+        res.flush();
+    }, 20000);
 
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
