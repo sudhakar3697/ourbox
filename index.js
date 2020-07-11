@@ -156,8 +156,10 @@ async function listFilesInRoot() {
         const result = await storageRef.listAll();
         // get folders result.prefixes
         for await (const entry of result.items) {
-            const { name, fullPath, size, contentType, updated } = await entry.getMetadata();
-            data.push({ name, fullPath, size: (size / (1024 * 1024)).toFixed(2), contentType, updated });
+            const { fullPath, size, updated } = await entry.getMetadata();
+            // const downloadUrl = await entry.getDownloadURL();
+            // data.push({ name, fullPath, size: (size / (1024 * 1024)).toFixed(2), contentType, updated, downloadUrl });
+            data.push({ fullPath, size, updated });
         }
         return data;
     } catch (err) {

@@ -32,13 +32,13 @@ async function showFileList(init = false) {
 
             const nameCol = document.createElement('td');
             const downloadAnchor = document.createElement('a');
-            downloadAnchor.download = file.name;
+            downloadAnchor.download = file.fullPath;
             getDownloadUrl(file.fullPath, downloadAnchor);
-            downloadAnchor.innerHTML = file.name;
+            downloadAnchor.innerHTML = file.fullPath;
             nameCol.appendChild(downloadAnchor);
 
             const sizeCol = document.createElement('td');
-            sizeCol.innerHTML = file.size;
+            sizeCol.innerHTML = (file.size / 1048576).toFixed(2);
 
             const updatedCol = document.createElement('td');
             updatedCol.innerHTML = new Date(file.updated).toLocaleString();
