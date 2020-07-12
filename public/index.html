@@ -18,6 +18,14 @@
             margin-bottom: 1%;
         }
 
+        .u-button {
+            margin-left: 2%;
+            font-weight: bolder;
+            color: blue;
+            font-size: large;
+            cursor: pointer;
+        }
+
         tr:hover {
             background-color: whitesmoke;
         }
@@ -36,7 +44,7 @@
             <button onclick="upload()"> Upload</button>
         </section>
         <section>
-            <h3>Uploads <button onclick="showFileList()">Refresh</button></h3>
+            <h3>Uploads <span onclick="showFileList()" title="Refresh" class="u-button">&#x21BB;</span></h3>
             <table id="file-table">
                 <tr>
                     <th>File</th>
@@ -48,7 +56,8 @@
         </section>
         <hr />
         <section>
-            <h3>Ongoing uploads <button onclick="showUploadsList()">Refresh</button></h3>
+            <h3>Ongoing uploads <span onclick="showUploadsList()" title="Refresh" class="u-button">&#x21BB;</span>
+            </h3>
             <table id="upload-progress-table">
                 <tr>
                     <th>File</th>

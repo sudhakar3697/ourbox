@@ -41,11 +41,17 @@ async function showFileList(init = false) {
             sizeCol.innerHTML = (file.size / 1048576).toFixed(2);
 
             const updatedCol = document.createElement('td');
-            updatedCol.innerHTML = new Date(file.updated).toLocaleString();
+            const dateStr = new Intl.DateTimeFormat(undefined, {
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: 'numeric', minute: 'numeric', second: 'numeric',
+            }).format(new Date(file.updated));
+            updatedCol.innerHTML = dateStr;
 
             const delButtonCol = document.createElement('td');
-            const deleteButton = document.createElement('button');
-            deleteButton.innerHTML = 'Delete';
+            const deleteButton = document.createElement('span');
+            deleteButton.setAttribute('class', 'u-button');
+            deleteButton.innerHTML = '&#x2718;';
+            deleteButton.title = `Delete ${file.fullPath}`;
             deleteButton.onclick = () => { deleteItem(file.fullPath) };
             delButtonCol.appendChild(deleteButton);
 
