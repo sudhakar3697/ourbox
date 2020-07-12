@@ -50,6 +50,7 @@ app.get('/api/', async (req, res) => {
 app.post('/api/', upload.fields([{ name: 'files-to-upload', maxCount: 4 }]), async (req, res) => {
     try {
         const errors = [];
+        const tasks = [];
         for (const file of req.files['files-to-upload']) {
             try {
                 const fileSize = file.size / (1024 * 1024);
@@ -57,6 +58,16 @@ app.post('/api/', upload.fields([{ name: 'files-to-upload', maxCount: 4 }]), asy
                     errors.push({ name: file.originalname, error: 'File should be less than 50 MB' });
                 }
                 else {
+                    tasks.push({ name: file.originalname, status: 'started' });
+                    if (!uploadTasks.has(file.originalname)) {
+                        console.log('Task has been added to uploadTasks Map');
+                        uploadTasks.set(file.originalname, null);
+                        printUploadTasksMap('uploadItem-init-1');
+                    }
+                    else {
+                        console.log('Already present in uploadTasks Map');
+                        printUploadTasksMap('uploadItem-init-2');
+                    }
                     uploadItem(file.originalname, file.buffer);
                 }
             } catch (err) {
@@ -64,6 +75,7 @@ app.post('/api/', upload.fields([{ name: 'files-to-upload', maxCount: 4 }]), asy
             }
         }
         res.send({
+            tasks,
             errors
         });
     } catch (err) {
@@ -128,7 +140,7 @@ app.get('/api/uploads', async (req, res) => {
         const data = [];
         printUploadTasksMap('/api/uploads');
         for (const task of uploadTasks) {
-            const { bytesTransferred, totalBytes, state } = task[1].snapshot;
+            const { bytesTransferred, totalBytes, state } = task[1]?.snapshot ?? {};
             data.push({
                 file: task[0],
                 bytesTransferred: `${(bytesTransferred / (1024 * 1024)).toFixed(2)} MB`,
@@ -191,15 +203,8 @@ async function uploadItem(fileName, file) {
     //     state: uploadTask.snapshot.state
     // });
     printUploadTasksMap('uploadItem1');
-    if (!uploadTasks.has(fileName)) {
-        console.log('Task has been added to uploadTasks Map');
-        uploadTasks.set(fileName, uploadTask);
-        printUploadTasksMap('uploadItem2');
-    }
-    else {
-        console.log('Already present in uploadTasks Map');
-        printUploadTasksMap('uploadItem3');
-    }
+    uploadTasks.set(fileName, uploadTask);
+    printUploadTasksMap('uploadItem2');
     uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
         // uploadEventsStream.emit('progress', {
         //     bytesTransferred: `${(uploadTask.snapshot.bytesTransferred / (1024 * 1024)).toFixed(2)} MB`,

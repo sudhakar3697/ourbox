@@ -101,7 +101,7 @@ async function showUploadsList(init = false) {
             nameCol.innerHTML = file;
 
             const progressCol = document.createElement('td');
-            progressCol.innerHTML = `${progress} % (${bytesTransferred} / ${totalBytes} - ${state})`;
+            progressCol.innerHTML = (state) ? `${progress} % (${bytesTransferred} / ${totalBytes} - ${state})` : 'Yet to start';
 
             const pauseOrResumeCol = document.createElement('td');
             const pauseOrResumeButton = document.createElement('button');
@@ -117,8 +117,10 @@ async function showUploadsList(init = false) {
 
             row.appendChild(nameCol);
             row.appendChild(progressCol);
-            row.appendChild(pauseOrResumeCol);
-            row.appendChild(cancelCol);
+            if (state) {
+                row.appendChild(pauseOrResumeCol);
+                row.appendChild(cancelCol);
+            }
 
             uploadsTable.appendChild(row);
         }
