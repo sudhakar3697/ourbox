@@ -1,4 +1,4 @@
-const EventEmitter = require('events');
+// const EventEmitter = require('events');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -14,7 +14,7 @@ const PORT = process.env.PORT;
 const app = new express();
 const upload = multer();
 const uploadTasks = new Map();
-const uploadEventsStream = new EventEmitter();
+// const uploadEventsStream = new EventEmitter();
 
 app.use(cors());
 app.use(helmet());
@@ -144,7 +144,7 @@ app.get('/api/uploads', async (req, res) => {
     }
 });
 
-app.get('/api/uploads/events', (req, res) => sendUploadEvents(req, res));
+// app.get('/api/uploads/events', (req, res) => sendUploadEvents(req, res));
 
 app.listen(PORT, () => {
     console.log(`Ourbox is running at ${PORT}`);
@@ -157,8 +157,6 @@ async function listFilesInRoot() {
         // get folders result.prefixes
         for await (const entry of result.items) {
             const { fullPath, size, updated } = await entry.getMetadata();
-            // const downloadUrl = await entry.getDownloadURL();
-            // data.push({ name, fullPath, size: (size / (1024 * 1024)).toFixed(2), contentType, updated, downloadUrl });
             data.push({ fullPath, size, updated });
         }
         return data;
@@ -185,13 +183,13 @@ async function deleteItem(path) {
 
 async function uploadItem(fileName, file) {
     const uploadTask = storageRef.child(fileName).put(file);
-    uploadEventsStream.emit('start', {
-        bytesTransferred: `${(uploadTask.snapshot.bytesTransferred / (1024 * 1024)).toFixed(2)} MB`,
-        totalBytes: `${(uploadTask.snapshot.totalBytes / (1024 * 1024)).toFixed(2)} MB`,
-        progress: ((uploadTask.snapshot.bytesTransferred / uploadTask.snapshot.totalBytes) * 100).toFixed(2),
-        file: fileName,
-        state: uploadTask.snapshot.state
-    });
+    // uploadEventsStream.emit('start', {
+    //     bytesTransferred: `${(uploadTask.snapshot.bytesTransferred / (1024 * 1024)).toFixed(2)} MB`,
+    //     totalBytes: `${(uploadTask.snapshot.totalBytes / (1024 * 1024)).toFixed(2)} MB`,
+    //     progress: ((uploadTask.snapshot.bytesTransferred / uploadTask.snapshot.totalBytes) * 100).toFixed(2),
+    //     file: fileName,
+    //     state: uploadTask.snapshot.state
+    // });
     printUploadTasksMap('uploadItem1');
     if (!uploadTasks.has(fileName)) {
         console.log('Task has been added to uploadTasks Map');
@@ -203,13 +201,13 @@ async function uploadItem(fileName, file) {
         printUploadTasksMap('uploadItem3');
     }
     uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
-        uploadEventsStream.emit('progress', {
-            bytesTransferred: `${(uploadTask.snapshot.bytesTransferred / (1024 * 1024)).toFixed(2)} MB`,
-            totalBytes: `${(uploadTask.snapshot.totalBytes / (1024 * 1024)).toFixed(2)} MB`,
-            progress: ((uploadTask.snapshot.bytesTransferred / uploadTask.snapshot.totalBytes) * 100).toFixed(2),
-            file: fileName,
-            state: uploadTask.snapshot.state
-        });
+        // uploadEventsStream.emit('progress', {
+        //     bytesTransferred: `${(uploadTask.snapshot.bytesTransferred / (1024 * 1024)).toFixed(2)} MB`,
+        //     totalBytes: `${(uploadTask.snapshot.totalBytes / (1024 * 1024)).toFixed(2)} MB`,
+        //     progress: ((uploadTask.snapshot.bytesTransferred / uploadTask.snapshot.totalBytes) * 100).toFixed(2),
+        //     file: fileName,
+        //     state: uploadTask.snapshot.state
+        // });
         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
         console.log('Upload is ' + progress + '% done');
         switch (snapshot.state) {
@@ -222,69 +220,69 @@ async function uploadItem(fileName, file) {
         }
     }, (error) => {
         console.log(error.code);
-        uploadEventsStream.emit('error', {
-            bytesTransferred: `${(uploadTask.snapshot.bytesTransferred / (1024 * 1024)).toFixed(2)} MB`,
-            totalBytes: `${(uploadTask.snapshot.totalBytes / (1024 * 1024)).toFixed(2)} MB`,
-            progress: ((uploadTask.snapshot.bytesTransferred / uploadTask.snapshot.totalBytes) * 100).toFixed(2),
-            file: fileName,
-            state: uploadTask.snapshot.state
-        });
+        // uploadEventsStream.emit('error', {
+        //     bytesTransferred: `${(uploadTask.snapshot.bytesTransferred / (1024 * 1024)).toFixed(2)} MB`,
+        //     totalBytes: `${(uploadTask.snapshot.totalBytes / (1024 * 1024)).toFixed(2)} MB`,
+        //     progress: ((uploadTask.snapshot.bytesTransferred / uploadTask.snapshot.totalBytes) * 100).toFixed(2),
+        //     file: fileName,
+        //     state: uploadTask.snapshot.state
+        // });
         printUploadTasksMap('uploadItem4');
     }, () => {
-        uploadEventsStream.emit('complete', {
-            bytesTransferred: `${(uploadTask.snapshot.bytesTransferred / (1024 * 1024)).toFixed(2)} MB`,
-            totalBytes: `${(uploadTask.snapshot.totalBytes / (1024 * 1024)).toFixed(2)} MB`,
-            progress: ((uploadTask.snapshot.bytesTransferred / uploadTask.snapshot.totalBytes) * 100).toFixed(2),
-            file: fileName,
-            state: uploadTask.snapshot.state
-        });
+        // uploadEventsStream.emit('complete', {
+        //     bytesTransferred: `${(uploadTask.snapshot.bytesTransferred / (1024 * 1024)).toFixed(2)} MB`,
+        //     totalBytes: `${(uploadTask.snapshot.totalBytes / (1024 * 1024)).toFixed(2)} MB`,
+        //     progress: ((uploadTask.snapshot.bytesTransferred / uploadTask.snapshot.totalBytes) * 100).toFixed(2),
+        //     file: fileName,
+        //     state: uploadTask.snapshot.state
+        // });
         printUploadTasksMap('uploadItem5');
         uploadTasks.delete(fileName);
     });
 }
 
-function sendUploadEvents(req, res) {
+// function sendUploadEvents(req, res) {
 
-    res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive'
-    });
+//     res.writeHead(200, {
+//         'Content-Type': 'text/event-stream',
+//         'Cache-Control': 'no-cache',
+//         Connection: 'keep-alive'
+//     });
 
-    setTimeout(() => {
-        res.write(`data: ${JSON.stringify({
-            status: 'OK'
-        })}\n\n`);
-        res.flush();
-    }, 25000);
+//     setTimeout(() => {
+//         res.write(`data: ${JSON.stringify({
+//             status: 'OK'
+//         })}\n\n`);
+//         res.flush();
+//     }, 25000);
 
-    setInterval(() => {
-        res.write(`data: ${JSON.stringify({
-            status: 'OK'
-        })}\n\n`);
-        res.flush();
-    }, 50000);
+//     setInterval(() => {
+//         res.write(`data: ${JSON.stringify({
+//             status: 'OK'
+//         })}\n\n`);
+//         res.flush();
+//     }, 50000);
 
-    uploadEventsStream.on('start', function (data) {
-        res.write(`data: ${JSON.stringify(data)}\n\n`);
-        res.flush();
-    });
+//     uploadEventsStream.on('start', function (data) {
+//         res.write(`data: ${JSON.stringify(data)}\n\n`);
+//         res.flush();
+//     });
 
-    uploadEventsStream.on('progress', function (data) {
-        res.write(`data: ${JSON.stringify(data)}\n\n`);
-        res.flush();
-    });
+//     uploadEventsStream.on('progress', function (data) {
+//         res.write(`data: ${JSON.stringify(data)}\n\n`);
+//         res.flush();
+//     });
 
-    uploadEventsStream.on('error', function (data) {
-        res.write(`data: ${JSON.stringify(data)}\n\n`);
-        res.flush();
-    });
+//     uploadEventsStream.on('error', function (data) {
+//         res.write(`data: ${JSON.stringify(data)}\n\n`);
+//         res.flush();
+//     });
 
-    uploadEventsStream.on('complete', function (data) {
-        res.write(`data: ${JSON.stringify(data)}\n\n`);
-        res.flush();
-    });
-}
+//     uploadEventsStream.on('complete', function (data) {
+//         res.write(`data: ${JSON.stringify(data)}\n\n`);
+//         res.flush();
+//     });
+// }
 
 function printUploadTasksMap(name = '') {
     console.log(`start - printUploadTasksMap - ${name}`);
