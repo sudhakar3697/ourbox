@@ -140,7 +140,8 @@ app.get('/api/uploads', async (req, res) => {
         const data = [];
         printUploadTasksMap('/api/uploads');
         for (const task of uploadTasks) {
-            const { bytesTransferred, totalBytes, state } = task[1]?.snapshot ?? {};
+            const task2 = task[1] || {};
+            const { bytesTransferred, totalBytes, state } = task2.snapshot || {};
             data.push({
                 file: task[0],
                 bytesTransferred: `${(bytesTransferred / (1024 * 1024)).toFixed(2)} MB`,
